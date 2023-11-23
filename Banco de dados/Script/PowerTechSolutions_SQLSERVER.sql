@@ -1,10 +1,5 @@
 
-CREATE DATABASE PowerTechSolutions;
-GO
-
-USE PowerTechSolutions;
-
--- CriaÃ§Ã£o das tabelas 
+-- Criação das tabelas 
 
 CREATE TABLE Grupo_Empresa(
 	IDGrupo_Empresa INT PRIMARY KEY IDENTITY(1,1),
@@ -84,6 +79,14 @@ CREATE TABLE Maquinas(
 			REFERENCES Tipo_maquina(IDTipo)
 );
 
+CREATE TABLE Tempo_de_Execucao(
+	IDTempo INT PRIMARY KEY IDENTITY(1,1),
+	Data_Hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+	Total_captura TIME,
+	FKMaquina INT,
+	CONSTRAINT FKTempo_maquina FOREIGN KEY (FKMaquina) REFERENCES Maquinas(IDMaquina)
+);
+
 CREATE TABLE Redes_conectadas(
 	IDConexao INT PRIMARY KEY IDENTITY(1,1),
     Data_Hora_Conexao DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -156,20 +159,26 @@ CREATE TABLE Componentes_monitorados(
 CREATE TABLE Monitoramento_RAW(
 	IDMonitoramento INT PRIMARY KEY IDENTITY(1,1),
     Data_Hora_Captura DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Dado_Capturado VARCHAR(30),
+	Total FLOAT,
+	Free FLOAT,
+	Uso FLOAT,
+	Porcentagem FLOAT,
     FKComponente_Monitorado INT,
 	FKComponente_Cadastrado INT,
 		CONSTRAINT FKMonitoramento_RAW_Componente_maquina FOREIGN KEY (FKComponente_Monitorado,FKComponente_Cadastrado)
 			REFERENCES Componentes_monitorados(IDComponente_monitorado,FKComponente_Cadastrado)
 );
 
-CREATE TABLE Monitoramento_Trusted(
+CREATE TABLE Monitoramento_TRUSTED(
 	IDMonitoramento INT PRIMARY KEY IDENTITY(1,1),
     Data_Hora_Captura DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Dado_Capturado VARCHAR(30),
+	Total FLOAT,
+	Free FLOAT,
+	Uso FLOAT,
+	Porcentagem FLOAT,
     FKComponente_Monitorado INT,
 	FKComponente_Cadastrado INT,
-    CONSTRAINT FKMonitoramento_TRUSTED_Componente_maquina FOREIGN KEY (FKComponente_Monitorado,FKComponente_Cadastrado)
+		CONSTRAINT FKMonitoramento_TRUSTED_Componente_maquina FOREIGN KEY (FKComponente_Monitorado,FKComponente_Cadastrado)
 			REFERENCES Componentes_monitorados(IDComponente_monitorado,FKComponente_Cadastrado)
 );
 
@@ -193,12 +202,12 @@ CREATE TABLE Alertas(
 			REFERENCES Unidade_de_negocio(IDUnidade)
 );
 
--- ArÃ©a de inserts para testes de funcionalidade 
+-- Aréa de inserts para testes de funcionalidade 
 
 INSERT INTO Grupo_Empresa (Apelido_Interno_Grupo,Razao_social) VALUES
 ('EDP Smart','EDP ENERGIAS DO BRASIL S.A.'),
 ('Matrix','Matrix Comercio e Servicos LTDA'),
-('AES TietÃª','AES TIETE INTEGRA SOLUCOES EM ENERGIA LTDA.');
+('AES Tietê','AES TIETE INTEGRA SOLUCOES EM ENERGIA LTDA.');
 
 INSERT INTO Unidade_de_negocio (Cnpj,Apelido_interno,Nome_Fantasia,FKGrupo_empresa) VALUES
 ('28630316000186','EDP Smart Sede','EDP Energias do Brasil',1),
@@ -257,90 +266,4 @@ INSERT INTO Componentes_monitorados (FKComponente_cadastrado,FKMaquina) VALUES
 (4,3),
 (5,3),
 (6,3);
-
-
-SELECT 
-	Data_Hora_Captura,
-    Dado_Capturado AS Uso_CPU,
-    Componentes_cadastrados.Apelido
-    FROM 
-		Monitoramento_RAW JOIN Componentes_monitorados 
-		ON FKComponente_Monitorado = IDComponente_monitorado 
-			JOIN Componentes_cadastrados 
-				ON Componentes_monitorados.FKComponente_cadastrado = IDComponente_cadastrado
-					JOIN Maquinas 
-						ON FKMaquina = IDMaquina
-							WHERE FKMaquina = 1
-								AND Componentes_cadastrados.Apelido = 'CPU'
-									ORDER BY Monitoramento_RAW.IDMonitoramento DESC;
-
-SELECT 
-	Data_Hora_Captura,
-    Dado_Capturado AS "Uso_RAM",
-    Componentes_cadastrados.Apelido 
-    FROM 
-		Monitoramento_RAW JOIN Componentes_monitorados 
-		ON FKComponente_Monitorado = IDComponente_monitorado 
-			JOIN Componentes_cadastrados 
-				ON Componentes_monitorados.FKComponente_cadastrado = IDComponente_cadastrado
-					JOIN Maquinas 
-						ON FKMaquina = IDMaquina
-							WHERE FKMaquina = 1
-								AND Componentes_cadastrados.Apelido = 'RAM';
-                                
-SELECT 
-	Componentes_monitorados.IDComponente_monitorado as IDMonitoramento,
-	Data_Hora_Captura,
-    Dado_Capturado AS "Uso_DIsco",
-    Componentes_cadastrados.Apelido 
-    FROM 
-		Monitoramento_RAW JOIN Componentes_monitorados 
-		ON FKComponente_Monitorado = IDComponente_monitorado 
-		JOIN Componentes_cadastrados 
-		ON Componentes_monitorados.FKComponente_cadastrado = IDComponente_cadastrado
-		JOIN Maquinas 
-		ON FKMaquina = IDMaquina
-		WHERE FKMaquina = 1
-		AND Componentes_cadastrados.Apelido = 'DISCO'
-		ORDER BY Monitoramento_RAW.IDMonitoramento DESC;
-
-SELECT 
-	Nome_Dispositivo,
-    Data_Hora_Conexao
-    FROM 
-		Dispositivos_USB WHERE FKMaquina = 1;
-        
-SELECT 
-	Servidor_DNS,
-    Data_Hora_Conexao
-		FROM Redes_conectadas
-        WHERE FKMaquina = 1;
-        
-SELECT 
-	IDRegistro,
-	IDJanela,
-    PIDJanelas,
-    Nome_Janelas,
-    Data_Hora_Conexao
-    FROM Janelas_Abertas WHERE FKMaquina = 1;
-    
-SELECT
-	Data_Hora_Captura 
-		FROM 
-			Monitoramento_RAW JOIN Componentes_monitorados 
-				ON FKComponente_Monitorado = IDComponente_monitorado 
-					JOIN Componentes_cadastrados 
-						ON Componentes_monitorados.FKComponente_cadastrado = IDComponente_cadastrado
-							JOIN Maquinas 
-								ON FKMaquina = IDMaquina
-									WHERE FKMaquina = 1
-										AND Componentes_cadastrados.Apelido = 'DISCO';
-                                            
-SELECT Count(IDMaquina) as Contagem 
-	FROM Maquinas JOIN Tipo_maquina
-		ON Maquinas.FKTipo_maquina = Tipo_maquina.IDTipo
-	JOIN Usuario_Dashboard
-		ON Maquinas.FKFuncionario = Usuario_Dashboard.IDUsuario 
-    WHERE Tipo_maquina.Apelido = 'FISICA'
-		AND Usuario_Dashboard.FKUnidade = 1;
 
